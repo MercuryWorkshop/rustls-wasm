@@ -1,0 +1,31 @@
+<html>
+
+<head>
+	<title>rustls wasm</title>
+</head>
+
+<body>
+	<script type="module">
+		import rustlsWasm, { connect_tls } from "./pkg/rustls-bundled.js";
+
+		await rustlsWasm();
+
+		const wss = new WebSocketStream("ws://localhost:4000/example.com:443");
+		const {readable, writable} = await wss.opened; 
+		const {read, write} = await connect_tls(readable, writable, "example.com");
+		let writer = write.getWriter();
+		writer.write("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n");
+		let reader = read.getReader();
+		let done = false;
+		while (!done) {
+			const {done: readerDone, value} = await reader.read();
+			done = readerDone;
+			if (!done) {
+				console.log(value);
+				console.log(new TextDecoder("utf-8").decode(value));
+			}
+		}
+	</script>
+</body>
+
+</html>
